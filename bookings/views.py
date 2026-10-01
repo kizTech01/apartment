@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from apartments.models import Apartment, InteractionLog
 from notifications.services import notify
 from .forms import BookingForm, BookingResponseForm
@@ -36,10 +37,10 @@ def manage_booking(request, pk):
     return render(request, "bookings/manage.html", {"form": form, "booking": booking})
 
 @login_required
+@require_POST
 def cancel_booking(request, pk):
     booking = get_object_or_404(Booking, pk=pk, tenant=request.user, status=Booking.Status.PENDING)
-    if request.method == "POST":
-        booking.status = Booking.Status.CANCELLED; booking.cancellation_reason = request.POST.get("reason", "Cancelled by tenant"); booking.save()
-        notify(booking.apartment.landlord, "Inspection cancelled", f"{request.user.full_name} cancelled an inspection request for {booking.apartment.title}.", "BOOKING")
-        messages.info(request, "Inspection request cancelled.")
+    booking.status = Booking.Status.CANCELLED; booking.cancellation_reason = request.POST.get("reason", "Cancelled by tenant"); booking.save()
+    notify(booking.apartment.landlord, "Inspection cancelled", f"{request.user.full_name} cancelled an inspection request for {booking.apartment.title}.", "BOOKING")
+    messages.info(request, "Inspection request cancelled.")
     return redirect("bookings:list")

@@ -19,9 +19,15 @@ class ImageForm(forms.ModelForm):
         return image
 
 class SearchForm(forms.Form):
-    location = forms.ChoiceField(required=False, choices=[("", "All locations")] + list(Apartment.Location.choices))
-    min_price = forms.DecimalField(required=False, min_value=0)
-    max_price = forms.DecimalField(required=False, min_value=0)
-    bedrooms = forms.IntegerField(required=False, min_value=0)
-    amenities = forms.MultipleChoiceField(required=False, choices=[(x, x) for x in Apartment.AMENITIES])
-    sort = forms.ChoiceField(required=False, choices=[("newest", "Newest listings"), ("price", "Lowest price"), ("-price", "Highest price")])
+    location = forms.ChoiceField(required=False, choices=[("", "All locations")] + list(Apartment.Location.choices), widget=forms.Select(attrs={"class": "form-select"}))
+    min_price = forms.DecimalField(required=False, min_value=0, widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "Any minimum"}))
+    max_price = forms.DecimalField(required=False, min_value=0, widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "Any maximum"}))
+    bedrooms = forms.IntegerField(required=False, min_value=0, widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "Any", "min": 0}))
+    amenities = forms.MultipleChoiceField(required=False, choices=[(x, x) for x in Apartment.AMENITIES], widget=forms.CheckboxSelectMultiple)
+    sort = forms.ChoiceField(required=False, choices=[("newest", "Newest listings"), ("price", "Lowest price"), ("-price", "Highest price")], widget=forms.Select(attrs={"class": "form-select"}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("min_price") is not None and cleaned_data.get("max_price") is not None and cleaned_data["min_price"] > cleaned_data["max_price"]:
+            self.add_error("max_price", "Maximum price must be at least the minimum price.")
+        return cleaned_data

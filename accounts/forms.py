@@ -24,7 +24,7 @@ class LandlordRegistrationForm(RegistrationForm):
 
 class LoginForm(AuthenticationForm):
     account_type = forms.ChoiceField(
-        choices=[("TENANT", "Tenant"), ("LANDLORD", "Landlord")],
+        choices=[("TENANT", "Tenant"), ("LANDLORD", "Landlord / Agent"), ("ADMIN", "Administrator")],
         label="Sign in as",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
@@ -41,6 +41,8 @@ class LoginForm(AuthenticationForm):
             raise forms.ValidationError("This account is registered as a landlord. Please choose Landlord.")
         if user and account_type == "LANDLORD" and user.role not in {User.Role.LANDLORD, User.Role.AGENT}:
             raise forms.ValidationError("This account is registered as a tenant. Please choose Tenant.")
+        if user and account_type == "ADMIN" and not (user.is_superuser or user.role == User.Role.ADMIN):
+            raise forms.ValidationError("This account is not registered as an administrator.")
         return cleaned_data
 
 

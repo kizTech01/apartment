@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404
+from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import ApartmentForm, ImageForm, SearchForm
 from .models import Apartment, Favourite, InteractionLog
@@ -65,6 +66,7 @@ def image_add(request, pk):
     return render(request, "apartments/image_form.html", {"form": form, "apartment": apartment})
 
 @login_required
+@require_POST
 def toggle_favourite(request, pk):
     if request.user.role != "TENANT": raise Http404
     apartment = get_object_or_404(Apartment, pk=pk, status=Apartment.Status.AVAILABLE)
