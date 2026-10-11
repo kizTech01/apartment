@@ -42,7 +42,7 @@ Copy `.env.example` to `.env` and set `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `AL
 DATABASE_URL=postgresql://aparthub:password@localhost:5432/aparthub
 ```
 
-Never commit `.env` or SMTP credentials.
+Never commit `.env`, administrator passwords, or SMTP credentials. Commit the safe `.env.example` template only.
 
 ## Recommendation engine
 
@@ -88,4 +88,22 @@ static/css/         Apart-inspired visual system
 
 ## Production deployment
 
-Use `config.settings.production`, PostgreSQL, a real email backend, HTTPS, a strong environment-only secret key, configured allowed hosts, and managed static/media storage. The standard Django admin is available at `/admin/`; users with the Administrator role automatically receive Django staff access. Configure `CSRF_TRUSTED_ORIGINS` with each public HTTPS origin and set `SECURE_SSL_REDIRECT=False` only for a host that does not terminate TLS. Review upload-storage policies before release.
+Use `config.settings.production`, PostgreSQL, a real email backend, HTTPS, a strong environment-only secret key, configured allowed hosts, and managed static/media storage. The standard Django admin is available at `/admin/`; users with the Administrator role automatically receive Django staff access.
+
+### Render
+
+Verification documents are file uploads, so attach a Render persistent disk at `/var/data` and set `MEDIA_ROOT=/var/data/media`. Without persistent storage uploads can disappear on redeploy and an unwritable upload directory can cause a 500 response.
+
+Set `DJANGO_SETTINGS_MODULE=config.settings.production` and add the values in `.env.example` to **Dashboard → Environment** (using real secret values). Set the build command to:
+
+```text
+pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py provision_admin
+```
+
+Set the start command to:
+
+```text
+gunicorn config.wsgi:application
+```
+
+`provision_admin` creates the configured `ADMIN_EMAIL` account on the first deploy, or promotes and synchronises that existing account on later deploys. `ADMIN_PASSWORD` is the administrator's login password, so keep it secret and change it in Render when you need to rotate access. Configure `CSRF_TRUSTED_ORIGINS` with each public HTTPS origin and set `SECURE_SSL_REDIRECT=False` only for a host that does not terminate TLS. Review upload-storage policies before release.

@@ -54,11 +54,19 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Render's normal filesystem is replaced on every deploy.  Set MEDIA_ROOT to a
+# mounted persistent disk (for example, /var/data/media) in production.
+MEDIA_ROOT = Path(env("MEDIA_ROOT", default=str(BASE_DIR / "media")))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard:home"
 LOGOUT_REDIRECT_URL = "apartments:home"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@aparthub.local")
+# These values are consumed by `python manage.py provision_admin`.  Keeping
+# them in the environment means no administrator credentials are committed.
+ADMIN_EMAIL = env("ADMIN_EMAIL", default="")
+ADMIN_FULL_NAME = env("ADMIN_FULL_NAME", default="")
+ADMIN_PHONE = env("ADMIN_PHONE", default="")
+ADMIN_PASSWORD = env("ADMIN_PASSWORD", default="")
 REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"]}

@@ -5,6 +5,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("administrator/verifications/", views.verification_queue, name="verification_queue"),
     path("administrator/verifications/<int:pk>/", views.review_verification, name="review_verification"),
+    path("administrator/verifications/<int:pk>/document/", views.verification_document, name="verification_document"),
     path("administrator/listings/", views.listing_queue, name="listing_queue"),
     path("administrator/listings/<int:pk>/", views.review_listing, name="review_listing"),
     path("administrator/reports/", views.report_queue, name="report_queue"),

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from accounts.models import LandlordVerification, User
@@ -76,6 +77,19 @@ def review_verification(request, pk):
         messages.success(request, f"Verification {outcome}.")
         return redirect("dashboard:verification_queue")
     return render(request, "dashboard/review_verification.html", {"entry": entry, "form": form})
+
+
+@administrator_required
+def verification_document(request, pk):
+    """Stream private verification evidence only to authorised administrators."""
+    entry = get_object_or_404(LandlordVerification, pk=pk)
+    if not entry.document:
+        raise Http404("Verification document not found.")
+    try:
+        document = entry.document.open("rb")
+    except FileNotFoundError as error:
+        raise Http404("Verification document not found.") from error
+    return FileResponse(document, as_attachment=True, filename=entry.document.name.rsplit("/", 1)[-1])
 
 
 @administrator_required

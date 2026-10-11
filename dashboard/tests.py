@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from accounts.models import User
+from accounts.models import LandlordVerification, User
 from apartments.models import Apartment
 from moderation.models import ListingReport
 from notifications.models import Notification
@@ -39,6 +39,16 @@ class AdministratorWorkspaceTests(TestCase):
             with self.subTest(name=name):
                 self.assertEqual(self.client.get(reverse(f"dashboard:{name}")).status_code, 200)
         self.assertEqual(self.client.get(reverse("admin:index")).status_code, 200)
+
+    def test_verification_document_is_only_available_to_administrators(self):
+        verification = LandlordVerification.objects.create(
+            user=self.owner,
+            document="verification_documents/evidence.pdf",
+            document_type=LandlordVerification.DocumentType.OTHER,
+        )
+        url = reverse("dashboard:verification_document", args=[verification.pk])
+        self.client.force_login(self.tenant)
+        self.assertEqual(self.client.get(url).status_code, 403)
 
     def test_administrator_can_publish_listing_and_notifies_owner(self):
         self.client.force_login(self.admin)
