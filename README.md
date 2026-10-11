@@ -28,11 +28,14 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 python manage.py makemigrations
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py provision_admin
 python manage.py runserver
 ```
 
-Open `http://127.0.0.1:8000/`. Administrator accounts sign in normally, then use the Administrator dashboard to review verifications, listings and reports.
+Open `http://127.0.0.1:8000/`. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your
+untracked `.env` before running `provision_admin`. Administrator accounts sign
+in normally, then use the Administrator dashboard to review verifications,
+listings and reports.
 
 ## Environment
 
