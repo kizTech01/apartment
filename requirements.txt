@@ -5,8 +5,5 @@ psycopg[binary]>=3.1
 djangorestframework>=3.15
 pandas>=2.0
 scikit-learn>=1.4
-<<<<<<< HEAD
 gunicorn>=23.0
-=======
 whitenoise
->>>>>>> 32401fc (Fix Render WhiteNoise deployment)
