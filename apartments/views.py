@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db import connection
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,9 +21,24 @@ def apartment_list(request):
         if data.get("min_price") is not None: listings = listings.filter(price__gte=data["min_price"])
         if data.get("max_price") is not None: listings = listings.filter(price__lte=data["max_price"])
         if data.get("bedrooms") is not None: listings = listings.filter(bedrooms__gte=data["bedrooms"])
-        for amenity in data.get("amenities") or []: listings = listings.filter(amenities__contains=[amenity])
-        listings = listings.order_by(data.get("sort") or "-created_at")
-    return render(request, "apartments/list.html", {"form": form, "page_obj": Paginator(listings, 9).get_page(request.GET.get("page"))})
+        for amenity in data.get("amenities") or []:
+            # PostgreSQL supports JSON containment. SQLite does not, so search the
+            # serialized JSON value for the exact, quoted amenity instead.
+            if connection.features.supports_json_field_contains:
+                listings = listings.filter(amenities__contains=[amenity])
+            else:
+                listings = listings.filter(amenities__icontains=f'"{amenity}"')
+        sort_fields = {"newest": "-created_at", "price": "price", "-price": "-price"}
+        listings = listings.order_by(sort_fields[data.get("sort") or "newest"])
+
+    paginator = Paginator(listings, 9)
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    return render(request, "apartments/list.html", {
+        "form": form,
+        "page_obj": paginator.get_page(request.GET.get("page")),
+        "filter_query": query_params.urlencode(),
+    })
 
 def apartment_detail(request, pk):
     apartment = get_object_or_404(Apartment.objects.select_related("landlord").prefetch_related("images"), pk=pk, status=Apartment.Status.AVAILABLE)

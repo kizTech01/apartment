@@ -10,7 +10,7 @@ ApartHub is a Django rental platform for advertising, discovering, recommending 
 - Listing management, multiple images, moderated statuses, search and filters.
 - Favourites, interaction logging, apartment-scoped messages and inspection bookings.
 - In-app notifications, tenant reports and role-aware dashboards.
-- Django Admin back-office configuration for verification, listing moderation and platform management.
+- Dedicated in-app administrator workspace for verification, listing moderation, reports and user oversight.
 
 ## Technology
 
@@ -32,11 +32,11 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Open `http://127.0.0.1:8000/`. Use `/admin/` for verification and listing moderation actions.
+Open `http://127.0.0.1:8000/`. Administrator accounts sign in normally, then use the Administrator dashboard to review verifications, listings and reports.
 
 ## Environment
 
-Copy `.env.example` to `.env` and set `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, and `ALLOWED_HOSTS`. PostgreSQL is supported with a URL such as:
+Copy `.env.example` to `.env` and set `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS`. PostgreSQL is supported with a URL such as:
 
 ```text
 DATABASE_URL=postgresql://aparthub:password@localhost:5432/aparthub
@@ -88,4 +88,4 @@ static/css/         Apart-inspired visual system
 
 ## Production deployment
 
-Use `config.settings.production`, PostgreSQL, a real email backend, HTTPS, a strong environment-only secret key, configured allowed hosts, and managed static/media storage. Review upload-storage policies before release.
+Use `config.settings.production`, PostgreSQL, a real email backend, HTTPS, a strong environment-only secret key, configured allowed hosts, and managed static/media storage. The standard Django admin is available at `/admin/`; users with the Administrator role automatically receive Django staff access. Configure `CSRF_TRUSTED_ORIGINS` with each public HTTPS origin and set `SECURE_SSL_REDIRECT=False` only for a host that does not terminate TLS. Review upload-storage policies before release.

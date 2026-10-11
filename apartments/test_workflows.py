@@ -1,11 +1,9 @@
 from datetime import timedelta
 
 from django.test import TestCase
-from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.admin import VerificationAdmin
 from accounts.models import LandlordVerification, User
 from bookings.models import Booking
 from .models import Apartment, Favourite
@@ -80,7 +78,7 @@ class RoleWorkflowTests(TestCase):
         })
         self.assertRedirects(response, reverse("dashboard:home"))
 
-    def test_admin_verification_action_enables_owner_listing_access(self):
+    def test_administrator_verification_review_enables_owner_listing_access(self):
         admin = User.objects.create_user(
             email="reviewer@example.com", full_name="Reviewer", phone="08000000004",
             role=User.Role.ADMIN, is_staff=True, password="Strong-pass-123",
@@ -89,10 +87,38 @@ class RoleWorkflowTests(TestCase):
             user=self.unverified_owner, document="verification_documents/example.pdf",
             document_type=LandlordVerification.DocumentType.OTHER,
         )
-        request = RequestFactory().post("/admin/")
-        request.user = admin
-        VerificationAdmin(LandlordVerification, None).approve_verifications(
-            request, LandlordVerification.objects.filter(pk=submission.pk)
-        )
+        self.client.force_login(admin)
+        response = self.client.post(reverse("dashboard:review_verification", args=[submission.pk]), {
+            "decision": LandlordVerification.Status.APPROVED,
+            "rejection_reason": "",
+        })
+        self.assertRedirects(response, reverse("dashboard:verification_queue"))
         self.unverified_owner.refresh_from_db()
         self.assertTrue(self.unverified_owner.is_verified)
+
+    def test_find_homes_filter_combines_criteria_and_supports_newest_sort(self):
+        Apartment.objects.create(
+            landlord=self.owner, title="Too expensive Jimeta flat", description="Test",
+            price=900000, location=Apartment.Location.JIMETA, bedrooms=3, bathrooms=2,
+            amenities=["Water", "Parking"], status=Apartment.Status.AVAILABLE,
+        )
+        Apartment.objects.create(
+            landlord=self.owner, title="Girei flat", description="Test",
+            price=430000, location=Apartment.Location.GIREI, bedrooms=2, bathrooms=1,
+            amenities=["Water", "Parking"], status=Apartment.Status.AVAILABLE,
+        )
+
+        response = self.client.get(reverse("apartments:list"), {
+            "location": Apartment.Location.JIMETA,
+            "min_price": "400000",
+            "max_price": "500000",
+            "bedrooms": "2",
+            "amenities": ["Water", "Parking"],
+            "sort": "newest",
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [apartment.title for apartment in response.context["page_obj"].object_list],
+            [self.apartment.title],
+        )

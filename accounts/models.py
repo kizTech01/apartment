@@ -54,6 +54,13 @@ class User(AbstractUser):
     def is_property_owner(self):
         return self.role in {self.Role.LANDLORD, self.Role.AGENT}
 
+    def save(self, *args, **kwargs):
+        # An Administrator account needs Django staff access as well as access to
+        # the in-app dashboard. Superusers retain staff access regardless of role.
+        if self.role == self.Role.ADMIN:
+            self.is_staff = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.full_name or self.email
 
