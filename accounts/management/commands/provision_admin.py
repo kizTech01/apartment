@@ -5,18 +5,13 @@ from accounts.models import User
 
 
 class Command(BaseCommand):
-    help = "Create or promote the administrator configured with ADMIN_* environment variables."
+    help = "Create or promote the administrator configured with ADMIN_EMAIL and ADMIN_PASSWORD."
 
     def handle(self, *args, **options):
-        values = {
-            "ADMIN_EMAIL": settings.ADMIN_EMAIL.strip(),
-            "ADMIN_FULL_NAME": settings.ADMIN_FULL_NAME.strip(),
-            "ADMIN_PHONE": settings.ADMIN_PHONE.strip(),
-            "ADMIN_PASSWORD": settings.ADMIN_PASSWORD,
-        }
+        values = {"ADMIN_EMAIL": settings.ADMIN_EMAIL.strip(), "ADMIN_PASSWORD": settings.ADMIN_PASSWORD}
         configured = [name for name, value in values.items() if value]
         if not configured:
-            self.stdout.write("No ADMIN_* variables configured; administrator provisioning skipped.")
+            self.stdout.write("No administrator credentials configured; provisioning skipped.")
             return
         missing = [name for name, value in values.items() if not value]
         if missing:
@@ -25,8 +20,8 @@ class Command(BaseCommand):
         user, created = User.objects.get_or_create(
             email=values["ADMIN_EMAIL"],
             defaults={
-                "full_name": values["ADMIN_FULL_NAME"],
-                "phone": values["ADMIN_PHONE"],
+                "full_name": "Administrator",
+                "phone": "0000000000",
                 "role": User.Role.ADMIN,
                 "is_staff": True,
                 "is_superuser": True,
@@ -40,8 +35,6 @@ class Command(BaseCommand):
 
         changes = []
         for field, value in (
-            ("full_name", values["ADMIN_FULL_NAME"]),
-            ("phone", values["ADMIN_PHONE"]),
             ("role", User.Role.ADMIN),
             ("is_staff", True),
             ("is_superuser", True),

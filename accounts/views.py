@@ -1,9 +1,14 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from .forms import LandlordRegistrationForm, PreferenceForm, RegistrationForm, VerificationForm
 from .models import Preference, User
+
+
+logger = logging.getLogger(__name__)
 
 
 def register_tenant(request):
@@ -29,7 +34,14 @@ def verification(request):
     if not request.user.is_property_owner: return redirect("dashboard:home")
     form = VerificationForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        entry = form.save(commit=False); entry.user = request.user; entry.save()
+        entry = form.save(commit=False)
+        entry.user = request.user
+        try:
+            entry.save()
+        except OSError:
+            logger.exception("Could not save verification document for user %s", request.user.pk)
+            form.add_error(None, "Your document could not be saved. Please try again shortly.")
+            return render(request, "accounts/verification.html", {"form": form, "submissions": request.user.verifications.all()})
         messages.success(request, "Your document was submitted for review.")
         return redirect("accounts:verification")
     return render(request, "accounts/verification.html", {"form": form, "submissions": request.user.verifications.all()})

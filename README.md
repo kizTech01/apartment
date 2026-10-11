@@ -106,4 +106,4 @@ Set the start command to:
 gunicorn config.wsgi:application
 ```
 
-`provision_admin` creates the configured `ADMIN_EMAIL` account on the first deploy, or promotes and synchronises that existing account on later deploys. `ADMIN_PASSWORD` is the administrator's login password, so keep it secret and change it in Render when you need to rotate access. Configure `CSRF_TRUSTED_ORIGINS` with each public HTTPS origin and set `SECURE_SSL_REDIRECT=False` only for a host that does not terminate TLS. Review upload-storage policies before release.
+Set only `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the administrator. `provision_admin` creates the configured account on the first deploy, or promotes and synchronises that existing account on later deploys. `ADMIN_PASSWORD` is the administrator's login password, so keep it secret and change it in Render when you need to rotate access. Configure `CSRF_TRUSTED_ORIGINS` with each public HTTPS origin and set `SECURE_SSL_REDIRECT=False` only for a host that does not terminate TLS. Review upload-storage policies before release.
